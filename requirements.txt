@@ -1,0 +1,9 @@
+fastapi
+uvicorn
+jinja2
+beautifulsoup4
+httpx
+python-dotenv
+google-api-python-client
+google-auth-oauthlib
+pytest

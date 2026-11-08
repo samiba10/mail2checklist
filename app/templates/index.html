@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Checklists</title>
+<style>
+  body { margin:0; font:16px/1.45 system-ui, sans-serif; background:#f6f7f9; color:#1b1f24; }
+  @media (prefers-color-scheme: dark) { body { background:#0f1214; color:#e8eaed; } a { color:#25d366; } }
+  main { max-width:560px; margin:0 auto; padding:20px 16px; }
+  li { margin:8px 0; } small { opacity:.7; }
+</style>
+</head>
+<body><main>
+  <h1>Checklists</h1>
+  <ul>
+  {% for l in lists %}
+    <li><a href="/l/{{ l.token }}">{{ l.title }}</a> <small>{{ l.done }}/{{ l.total }}</small></li>
+  {% else %}
+    <li>No checklists yet.</li>
+  {% endfor %}
+  </ul>
+</main></body>
+</html>

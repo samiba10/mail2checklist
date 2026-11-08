@@ -1,0 +1,31 @@
+From: Orders <orders@example.com>
+To: you@example.com
+Subject: Order #1042 - items to pick
+Date: Sun, 08 Nov 2026 09:15:00 +0000
+Message-ID: <order-1042@example.com>
+MIME-Version: 1.0
+Content-Type: multipart/alternative; boundary="b1"
+
+--b1
+Content-Type: text/plain; charset="utf-8"
+
+Order #1042
+
+- Milk 2L x2
+- Eggs (12) x1
+- Bread x1
+
+--b1
+Content-Type: text/html; charset="utf-8"
+
+<html><body>
+<p>Order #1042</p>
+<table>
+  <tr><th>Item</th><th>Qty</th><th>Note</th></tr>
+  <tr><td>Milk 2L</td><td>2</td><td>low fat</td></tr>
+  <tr><td>Eggs (12)</td><td>1</td><td></td></tr>
+  <tr><td>Bread</td><td>1</td><td>whole wheat</td></tr>
+</table>
+</body></html>
+
+--b1--
