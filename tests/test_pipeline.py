@@ -50,16 +50,3 @@ def test_process_dedupes_and_toggles(tmp_path, capsys):
     assert r.json()["done"] is True
     assert store.get(token)[1][0]["done"] == 1
     assert client.post(f"/l/wrong/items/{items[0]['id']}/toggle").status_code == 404
-
-
-def test_admin_index_and_health(tmp_path):
-    import app.web as web
-    web.store = Store(str(tmp_path / "a.db"))
-    c = TestClient(web.app)
-    assert c.get("/healthz").json() == {"ok": True}
-    web.settings.admin_key = ""
-    assert c.get("/").status_code == 404                 # disabled without ADMIN_KEY
-    web.settings.admin_key = "s3cret"
-    assert c.get("/?key=wrong").status_code == 404
-    r = c.get("/?key=s3cret")
-    assert r.status_code == 200 and r.headers["x-robots-tag"].startswith("noindex")

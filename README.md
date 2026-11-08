@@ -2,8 +2,13 @@
 
 Gmail email → checklist web page → WhatsApp alert with a link to it.
 
-One container runs both parts: the **web app** (checklist pages) and the **poller**
-(checks Gmail every few minutes, creates the checklist, sends the WhatsApp message).
+One container runs both parts: the **web app** (checklist pages + an installable iPhone/Android
+home-screen app) and the **poller** (checks Gmail every few minutes, creates the checklist, sends a
+WhatsApp message and an app notification).
+
+| App home | A checklist |
+|---|---|
+| <img src="docs/app-home.png" width="260"> | <img src="docs/app-list.png" width="260"> |
 
 ## Quick start (offline)
 ```bash
@@ -46,6 +51,7 @@ Edit `app = "..."` in `fly.toml` to a unique name, then:
 ```bash
 fly launch --no-deploy --copy-config
 fly volumes create m2c_data --size 1 --region fra
+APP_KEY=$(openssl rand -hex 16); echo "App link: https://<your-app>.fly.dev/app/$APP_KEY"   # save this link
 fly secrets set \
   BASE_URL="https://<your-app>.fly.dev" \
   GMAIL_QUERY='from:<sender-domain> subject:"רשימת לקוחות" -label:processed' \
@@ -53,12 +59,24 @@ fly secrets set \
   WA_TOKEN="<permanent token>" \
   WA_PHONE_ID="<phone number id>" \
   WA_TO="05X-XXXXXXX" \
-  ADMIN_KEY="$(openssl rand -hex 16)"
+  APP_KEY="$APP_KEY" \
+  VAPID_SUBJECT="mailto:<your email>" \
+  $(.venv/bin/python -m app.push --gen-keys | tr '\n' ' ')
 fly deploy
 fly logs                                         # watch the poller
 ```
 Check: `https://<your-app>.fly.dev/healthz` → `{"ok": true}`.
 Send a matching test email to the Gmail account; within `POLL_SECONDS` a WhatsApp message arrives.
+
+## 4. Install the app on the iPhone (iOS 16.4 or newer)
+1. Take the app link printed in step 3 (`fly secrets list` cannot show the key again).
+   Send it to the technician privately.
+2. Open it in **Safari** → **Share** ⬆︎ → **Add to Home Screen** → Add.
+3. Open **רשימות** from the home screen and tap **🔔 הפעלת התראות** → Allow.
+
+From then on every new email gives a WhatsApp message **and** a notification; tapping it opens
+the checklist. Lists already opened stay readable without signal (ticking needs a connection).
+iPhone only allows notifications for apps added to the home screen, which is why step 3 happens there.
 
 ## Alternative: any server with Docker
 ```bash
@@ -69,7 +87,7 @@ Put HTTPS in front of port 8000 (for example Caddy: `caddy reverse-proxy --from 
 
 ## Privacy
 - Checklist links use random, unguessable tokens; pages send `noindex` so search engines skip them.
-- The overview page `/` is disabled unless `ADMIN_KEY` is set, and then needs `/?key=<ADMIN_KEY>`.
+- There is no public overview page. All lists are shown only at `/app/<APP_KEY>`; without `APP_KEY` the app is off.
 - Real emails go in `samples/private/` (git-ignored and excluded from the Docker image).
   `.env`, `credentials.json`, `token.json` and the database are never committed.
 

@@ -12,7 +12,7 @@ import logging
 import re
 import time
 
-from . import whatsapp
+from . import push, whatsapp
 from .config import Settings
 from .eml_parser import parse_bytes, parse_file, ParsedEmail
 from .extractor import extract_items
@@ -36,7 +36,13 @@ def process(email: ParsedEmail, msg_id: str, store: Store, s: Settings, dry_run:
     if dry_run or not (s.wa_token and s.wa_phone_id and s.wa_to):
         print("[WhatsApp preview]", whatsapp.preview(title, len(items), link, s.wa_lang))
     else:
-        whatsapp.send(s, title, len(items), link)
+        try:
+            whatsapp.send(s, title, len(items), link)
+        except Exception:
+            log.exception("WhatsApp send failed (checklist was still created)")
+    if not dry_run:
+        n = push.notify_all(s, store, title, f"{len(items)} עבודות חדשות", f"/l/{token}")
+        log.info("push notifications sent: %d", n)
     return token
 
 

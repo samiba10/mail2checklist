@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>רשימות עבודה</title>
+<link rel="manifest" href="/app/{{ key }}/manifest.webmanifest">
+{% include "_pwa_head.html" %}
+<style>
+  :root { --bg:#f6f7f9; --card:#fff; --fg:#1b1f24; --muted:#6a737d; --line:#e3e6ea; --accent:#128c7e; --warn:#fff6db; --warn-fg:#6b5300; }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg:#0f1214; --card:#181c1f; --fg:#e8eaed; --muted:#9aa0a6; --line:#2a2f33; --accent:#25d366; --warn:#2c2610; --warn-fg:#f0d77a; }
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--fg); font:16px/1.45 system-ui, -apple-system, sans-serif;
+         padding-top:env(safe-area-inset-top); padding-bottom:env(safe-area-inset-bottom); }
+  main { max-width:560px; margin:0 auto; padding:20px 16px 48px; }
+  header { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:16px; }
+  h1 { font-size:1.4rem; margin:0; }
+  button { font:inherit; border:0; border-radius:999px; padding:8px 14px; background:var(--accent); color:#fff; cursor:pointer; }
+  button.ghost { background:transparent; color:var(--accent); border:1px solid var(--line); }
+  .note { background:var(--warn); color:var(--warn-fg); border-radius:12px; padding:12px 14px; margin-bottom:16px; font-size:.92rem; }
+  .note[hidden] { display:none; }
+  ul { list-style:none; padding:0; margin:0; background:var(--card); border:1px solid var(--line); border-radius:12px; }
+  li + li { border-top:1px solid var(--line); }
+  a.row { display:block; padding:14px 16px; color:inherit; text-decoration:none; }
+  .title { font-weight:600; }
+  .sub { display:flex; gap:10px; align-items:center; color:var(--muted); font-size:.85rem; margin-top:4px; }
+  .bar { flex:1; height:5px; background:var(--line); border-radius:3px; overflow:hidden; }
+  .bar > i { display:block; height:100%; background:var(--accent); }
+  .done .title { color:var(--muted); }
+  .empty { padding:24px 16px; text-align:center; color:var(--muted); }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>רשימות עבודה</h1>
+    <button id="notify" class="ghost" hidden>🔔 הפעלת התראות</button>
+  </header>
+
+  <div class="note" id="install" hidden>
+    להתקנה באייפון: לחצו על <b>שיתוף</b> <span aria-hidden="true">⬆︎</span> ואז <b>הוספה למסך הבית</b>.
+    אחרי ההתקנה פתחו את האפליקציה מהאייקון כדי להפעיל התראות.
+  </div>
+  <div class="note" id="status" hidden></div>
+
+  <ul>
+  {% for l in lists %}
+    <li class="{{ 'done' if l.total and l.done == l.total }}">
+      <a class="row" href="/l/{{ l.token }}">
+        <div class="title" dir="auto">{{ l.title }}</div>
+        <div class="sub">
+          <span>{{ l.created[8:10] }}/{{ l.created[5:7] }}</span>
+          <span class="bar"><i style="width: {{ (100 * l.done / l.total) | round | int if l.total else 0 }}%"></i></span>
+          <span>{{ l.done }}/{{ l.total }}</span>
+        </div>
+      </a>
+    </li>
+  {% else %}
+    <li class="empty">אין רשימות עדיין. רשימה חדשה תופיע כאן כשיגיע מייל.</li>
+  {% endfor %}
+  </ul>
+</main>
+<script>
+  const KEY = {{ key | tojson }};
+  const VAPID = {{ vapid_public_key | tojson }};
+  const $ = (id) => document.getElementById(id);
+  try { localStorage.setItem('m2c-home', location.pathname); } catch {}
+
+  const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+  const standalone = matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+  if (isIOS && !standalone) $('install').hidden = false;
+
+  function say(msg) { $('status').textContent = msg; $('status').hidden = !msg; }
+  function b64ToBytes(s) {
+    const pad = '='.repeat((4 - s.length % 4) % 4);
+    const raw = atob((s + pad).replace(/-/g, '+').replace(/_/g, '/'));
+    return Uint8Array.from(raw, (c) => c.charCodeAt(0));
+  }
+
+  async function setup() {
+    if (!('serviceWorker' in navigator)) return;
+    const reg = await navigator.serviceWorker.register('/sw.js', { scope: '/' });
+    // iOS only allows push for the installed (home-screen) app.
+    if (!VAPID || !('PushManager' in window) || (isIOS && !standalone)) return;
+
+    const btn = $('notify');
+    const render = async () => {
+      const sub = await reg.pushManager.getSubscription();
+      btn.hidden = false;
+      btn.textContent = sub ? '🔕 כיבוי התראות' : '🔔 הפעלת התראות';
+      btn.className = sub ? 'ghost' : '';
+      return sub;
+    };
+    let sub = await render();
+    if (sub) fetch(`/app/${KEY}/subscribe`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(sub) });
+
+    btn.onclick = async () => {
+      say('');
+      try {
+        sub = await reg.pushManager.getSubscription();
+        if (sub) {
+          await fetch(`/app/${KEY}/unsubscribe`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ endpoint: sub.endpoint }) });
+          await sub.unsubscribe();
+        } else {
+          if (await Notification.requestPermission() !== 'granted') { say('ההתראות חסומות. אפשר לאשר אותן בהגדרות ← התראות.'); return; }
+          sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: b64ToBytes(VAPID) });
+          const r = await fetch(`/app/${KEY}/subscribe`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(sub) });
+          if (!r.ok) throw new Error();
+          say('✅ התראות הופעלו. רשימה חדשה תופיע כהתראה.');
+        }
+      } catch { say('לא הצלחנו לשנות את ההתראות. נסו שוב.'); }
+      render();
+    };
+  }
+  setup();
+  // refresh the list when the app comes back to the foreground
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && navigator.onLine) location.reload(); });
+</script>
+</body>
+</html>

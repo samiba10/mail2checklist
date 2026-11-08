@@ -2,15 +2,19 @@
 <html lang="{{ 'he' if rtl else 'en' }}" dir="{{ 'rtl' if rtl else 'ltr' }}">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>{{ lst.title }}</title>
+{% include "_pwa_head.html" %}
 <style>
   :root { --bg:#f6f7f9; --card:#fff; --fg:#1b1f24; --muted:#6a737d; --line:#e3e6ea; --accent:#128c7e; }
   @media (prefers-color-scheme: dark) {
     :root { --bg:#0f1214; --card:#181c1f; --fg:#e8eaed; --muted:#9aa0a6; --line:#2a2f33; --accent:#25d366; }
   }
   * { box-sizing: border-box; }
-  body { margin:0; background:var(--bg); color:var(--fg); font:16px/1.45 system-ui, sans-serif; }
+  body { margin:0; background:var(--bg); color:var(--fg); font:16px/1.45 system-ui, -apple-system, sans-serif;
+         padding-top:env(safe-area-inset-top); padding-bottom:env(safe-area-inset-bottom); }
+  .back { display:inline-block; color:var(--accent); text-decoration:none; font-size:.9rem; margin-bottom:10px; }
+  .back[hidden] { display:none; }
   main { max-width:560px; margin:0 auto; padding:20px 16px 48px; }
   h1 { font-size:1.3rem; margin:0 0 4px; }
   .meta { color:var(--muted); font-size:.85rem; margin-bottom:16px; }
@@ -32,6 +36,7 @@
 </head>
 <body>
 <main>
+  <a class="back" id="back" href="#" hidden>{{ '→ כל הרשימות' if rtl else '← All lists' }}</a>
   <h1 dir="auto">{{ lst.title }}</h1>
   <div class="meta" dir="auto">{{ lst.sender }}</div>
   <div class="bar"><i id="bar"></i></div>
@@ -60,10 +65,20 @@
       const r = await fetch(`${location.pathname}/items/${b.dataset.id}/toggle`, { method: 'POST' });
       if (!r.ok) throw new Error();
       b.checked = (await r.json()).done;
-    } catch { b.checked = !b.checked; alert('Could not save, try again.'); }
+    } catch {
+      b.checked = !b.checked;
+      alert(navigator.onLine ? {{ ('לא נשמר, נסו שוב.' if rtl else 'Could not save, try again.')|tojson }}
+                             : {{ ('אין חיבור לאינטרנט. הסימון לא נשמר.' if rtl else 'You are offline. Not saved.')|tojson }});
+    }
     refresh();
   }));
   refresh();
+  // "All lists" link when the app (home screen) was used before on this device
+  try {
+    const home = localStorage.getItem('m2c-home');
+    if (home) { const a = document.getElementById('back'); a.href = home; a.hidden = false; }
+  } catch {}
+  if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js', { scope: '/' }).catch(() => {});
 </script>
 </body>
 </html>

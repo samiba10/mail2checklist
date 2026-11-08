@@ -35,5 +35,9 @@ class Settings:
     wa_to: list[str] = field(default_factory=_wa_to)
     wa_template: str = field(default_factory=lambda: os.getenv("WA_TEMPLATE", "new_checklist"))
     wa_lang: str = field(default_factory=lambda: os.getenv("WA_LANG", "en"))
-    admin_key: str = field(default_factory=lambda: os.getenv("ADMIN_KEY", ""))
+    # Secret part of the app URL /app/<APP_KEY> (Mahran's home-screen app). Unset = app disabled.
+    app_key: str = field(default_factory=lambda: os.getenv("APP_KEY", ""))
+    vapid_private_key: str = field(default_factory=lambda: os.getenv("VAPID_PRIVATE_KEY", ""))
+    vapid_public_key: str = field(default_factory=lambda: os.getenv("VAPID_PUBLIC_KEY", ""))
+    vapid_subject: str = field(default_factory=lambda: os.getenv("VAPID_SUBJECT", "mailto:admin@example.com"))
     poll_seconds: int = field(default_factory=lambda: int(os.getenv("POLL_SECONDS", "180")))

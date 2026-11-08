@@ -1,6 +1,7 @@
 """SQLite storage for checklists and their items."""
 from __future__ import annotations
 
+import json
 import secrets
 import sqlite3
 from datetime import datetime, timezone
@@ -24,6 +25,11 @@ CREATE TABLE IF NOT EXISTS items (
     detail TEXT NOT NULL DEFAULT '',
     phones TEXT NOT NULL DEFAULT '',
     done INTEGER NOT NULL DEFAULT 0
+);
+CREATE TABLE IF NOT EXISTS push_subs (
+    endpoint TEXT PRIMARY KEY,
+    sub_json TEXT NOT NULL,
+    created TEXT NOT NULL
 );
 """
 
@@ -75,6 +81,22 @@ class Store:
             new = 0 if row["done"] else 1
             self.db.execute("UPDATE items SET done=? WHERE id=?", (new, item_id))
             return bool(new)
+
+    # --- web push subscriptions (one per installed device) ---
+    def add_push_subscription(self, sub: dict) -> None:
+        with self.db:
+            self.db.execute(
+                "INSERT INTO push_subs(endpoint, sub_json, created) VALUES (?,?,?) "
+                "ON CONFLICT(endpoint) DO UPDATE SET sub_json=excluded.sub_json",
+                (sub["endpoint"], json.dumps(sub), datetime.now(timezone.utc).isoformat()),
+            )
+
+    def remove_push_subscription(self, endpoint: str) -> None:
+        with self.db:
+            self.db.execute("DELETE FROM push_subs WHERE endpoint=?", (endpoint,))
+
+    def push_subscriptions(self) -> list[tuple[str, dict]]:
+        return [(r["endpoint"], json.loads(r["sub_json"])) for r in self.db.execute("SELECT * FROM push_subs")]
 
     def recent(self, limit: int = 50):
         return self.db.execute(

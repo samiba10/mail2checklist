@@ -1,2 +1,3 @@
 -r requirements.txt
 pytest==9.2.0
+Pillow==13.0.0  # only for regenerating icons
