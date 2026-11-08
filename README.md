@@ -10,6 +10,8 @@ WhatsApp message and an app notification).
 |---|---|
 | <img src="docs/app-home.png" width="260"> | <img src="docs/app-list.png" width="260"> |
 
+**New here? Start with [docs/SETUP.md](docs/SETUP.md)**: what you need and where each part runs.
+
 ## Quick start (offline)
 ```bash
 python3 -m venv .venv && .venv/bin/pip install -r requirements-dev.txt
