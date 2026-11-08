@@ -33,7 +33,7 @@ def test_extract_text_fallback():
 
 
 def test_process_dedupes_and_toggles(tmp_path, capsys):
-    s = Settings(db_path=str(tmp_path / "t.db"), wa_token="")
+    s = Settings(db_path=str(tmp_path / "t.db"), wa_token="", wa_lang="en")
     store = Store(s.db_path)
     e = parse_file(SAMPLE)
     token = process(e, e.message_id, store, s, dry_run=True)

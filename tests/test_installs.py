@@ -33,3 +33,16 @@ def test_private_installs_shape():
         assert it.phones and all(re.fullmatch(r"0\d{1,2}-\d{7}", p) for p in it.phones)
         assert re.search(r"#\d{7,10}", it.note)
         assert not re.match(r"^\W", it.note)                     # no stray quote / postal code
+
+
+def test_normalize_phone():
+    from app.config import normalize_phone
+    assert normalize_phone("052-123 4567", "972") == "972521234567"
+    assert normalize_phone("+972 52-1234567", "972") == "972521234567"
+    assert normalize_phone("00972521234567", "972") == "972521234567"
+    assert normalize_phone("972521234567") == "972521234567"
+
+
+def test_hebrew_preview():
+    from app.whatsapp import preview
+    assert preview("רשימה", 7, "https://x/l/abc", "he") == "רשימה חדשה *רשימה*: 7 עבודות. לפתיחה: https://x/l/abc"

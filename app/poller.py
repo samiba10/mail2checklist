@@ -34,7 +34,7 @@ def process(email: ParsedEmail, msg_id: str, store: Store, s: Settings, dry_run:
     link = f"{s.base_url}/l/{token}"
     log.info("created %d-item list %r -> %s", len(items), title, link)
     if dry_run or not (s.wa_token and s.wa_phone_id and s.wa_to):
-        print("[WhatsApp preview]", whatsapp.preview(title, len(items), link))
+        print("[WhatsApp preview]", whatsapp.preview(title, len(items), link, s.wa_lang))
     else:
         whatsapp.send(s, title, len(items), link)
     return token

@@ -2,7 +2,8 @@
 
 The bot normally starts the conversation, so Meta requires a pre-approved *template*.
 Create one in WhatsApp Manager (category: Utility), e.g. named `new_checklist`, body:
-    New list *{{1}}*: {{2}} items. Open: {{3}}
+    English (WA_LANG=en):  New list *{{1}}*: {{2}} items. Open: {{3}}
+    Hebrew  (WA_LANG=he):  רשימה חדשה *{{1}}*: {{2}} עבודות. לפתיחה: {{3}}
 """
 from __future__ import annotations
 
@@ -33,8 +34,15 @@ def build_payload(s: Settings, to: str, title: str, count: int, link: str) -> di
     }
 
 
-def preview(title: str, count: int, link: str) -> str:
-    return f"New list *{title}*: {count} items. Open: {link}"
+PREVIEW = {
+    "en": "New list *{t}*: {n} items. Open: {l}",
+    "he": "רשימה חדשה *{t}*: {n} עבודות. לפתיחה: {l}",
+}
+
+
+def preview(title: str, count: int, link: str, lang: str = "en") -> str:
+    """What the template message will look like (used for --dry-run)."""
+    return PREVIEW.get(lang, PREVIEW["en"]).format(t=title, n=count, l=link)
 
 
 def send(s: Settings, title: str, count: int, link: str) -> None:
