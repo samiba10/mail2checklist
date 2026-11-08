@@ -35,4 +35,5 @@ class Settings:
     wa_to: list[str] = field(default_factory=_wa_to)
     wa_template: str = field(default_factory=lambda: os.getenv("WA_TEMPLATE", "new_checklist"))
     wa_lang: str = field(default_factory=lambda: os.getenv("WA_LANG", "en"))
+    admin_key: str = field(default_factory=lambda: os.getenv("ADMIN_KEY", ""))
     poll_seconds: int = field(default_factory=lambda: int(os.getenv("POLL_SECONDS", "180")))

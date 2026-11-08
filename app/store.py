@@ -33,6 +33,8 @@ class Store:
         self.db = sqlite3.connect(path, check_same_thread=False)
         self.db.row_factory = sqlite3.Row
         self.db.execute("PRAGMA foreign_keys = ON")
+        self.db.execute("PRAGMA journal_mode = WAL")   # web + poller share the file
+        self.db.execute("PRAGMA busy_timeout = 5000")
         self.db.executescript(SCHEMA)
 
     def exists(self, msg_id: str) -> bool:

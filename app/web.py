@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import re
+import secrets
 from pathlib import Path
 
 from fastapi import FastAPI, HTTPException, Request
@@ -17,8 +18,25 @@ templates = Jinja2Templates(directory=str(Path(__file__).parent / "templates"))
 app = FastAPI(title="mail2checklist")
 
 
+@app.get("/healthz")
+def healthz():
+    store.db.execute("SELECT 1")
+    return {"ok": True}
+
+
+@app.middleware("http")
+async def no_index(request: Request, call_next):
+    resp = await call_next(request)
+    resp.headers["X-Robots-Tag"] = "noindex, nofollow"  # customer data: keep out of search engines
+    resp.headers["Referrer-Policy"] = "no-referrer"
+    return resp
+
+
 @app.get("/", response_class=HTMLResponse)
-def index(request: Request):
+def index(request: Request, key: str = ""):
+    # The overview lists every checklist, so it needs ADMIN_KEY (/?key=...). Unset = disabled.
+    if not settings.admin_key or not secrets.compare_digest(key, settings.admin_key):
+        raise HTTPException(404)
     return templates.TemplateResponse(request, "index.html", {"lists": store.recent()})
 
 

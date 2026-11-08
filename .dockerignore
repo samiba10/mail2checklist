@@ -1,0 +1,13 @@
+.venv/
+.git/
+.env
+.env.*
+!.env.example
+credentials.json
+token.json
+*.db
+*.db-*
+samples/private/
+screenshot*.png
+**/__pycache__/
+**/.pytest_cache/

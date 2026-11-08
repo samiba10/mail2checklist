@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import base64
+import os
 from pathlib import Path
 
 from .config import Settings
@@ -9,22 +10,36 @@ from .config import Settings
 SCOPES = ["https://www.googleapis.com/auth/gmail.modify"]  # read + add labels
 
 
-def _service(s: Settings):
+def _seed_token(s: Settings) -> None:
+    """On a server there is no browser: take the token from the GMAIL_TOKEN_JSON secret once."""
+    path = Path(s.gmail_token)
+    if not path.exists() and (blob := os.getenv("GMAIL_TOKEN_JSON", "").strip()):
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(blob)
+
+
+def _service(s: Settings, allow_browser: bool = False):
     from google.auth.transport.requests import Request
     from google.oauth2.credentials import Credentials
-    from google_auth_oauthlib.flow import InstalledAppFlow
     from googleapiclient.discovery import build
 
+    _seed_token(s)
     creds = None
     if Path(s.gmail_token).exists():
         creds = Credentials.from_authorized_user_file(s.gmail_token, SCOPES)
     if not creds or not creds.valid:
         if creds and creds.expired and creds.refresh_token:
             creds.refresh(Request())
-        else:
-            # First run: opens a browser for Google sign-in, then caches token.json
+        elif allow_browser:
+            from google_auth_oauthlib.flow import InstalledAppFlow
+
             creds = InstalledAppFlow.from_client_secrets_file(s.gmail_credentials, SCOPES).run_local_server(port=0)
-        Path(s.gmail_token).write_text(creds.to_json())
+        else:
+            raise RuntimeError(
+                "No Gmail token. Run `python -m app.gmail_auth` on your computer, "
+                "then set its token.json content as the GMAIL_TOKEN_JSON secret."
+            )
+        Path(s.gmail_token).write_text(creds.to_json())  # keeps the refreshed token on disk
     return build("gmail", "v1", credentials=creds, cache_discovery=False)
 
 
