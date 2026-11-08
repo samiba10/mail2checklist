@@ -4,3 +4,5 @@ credentials.json
 token.json
 *.db
 __pycache__/
+samples/private/
+screenshot-private*.png

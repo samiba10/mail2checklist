@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="{{ 'he' if rtl else 'en' }}" dir="{{ 'rtl' if rtl else 'ltr' }}">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -19,23 +19,31 @@
   .count { font-size:.85rem; color:var(--muted); margin-bottom:16px; }
   ul { list-style:none; padding:0; margin:0; background:var(--card); border:1px solid var(--line); border-radius:12px; }
   li + li { border-top:1px solid var(--line); }
-  label { display:flex; gap:12px; align-items:center; padding:14px 16px; cursor:pointer; }
-  input { width:22px; height:22px; accent-color:var(--accent); flex:none; }
+  label { display:flex; gap:12px; align-items:flex-start; padding:14px 16px 6px; cursor:pointer; }
+  label .t { font-weight:600; }
+  .d { display:block; color:var(--muted); font-size:.85rem; margin-top:2px; }
+  .calls { display:flex; flex-wrap:wrap; gap:8px; padding-block:0 12px; padding-inline:50px 16px; }
+  .calls a { font-size:.85rem; color:var(--accent); text-decoration:none; border:1px solid var(--line);
+             border-radius:999px; padding:4px 10px; direction:ltr; }
+  input { width:22px; height:22px; accent-color:var(--accent); flex:none; margin:1px 0 0; }
   input:checked + span { text-decoration:line-through; color:var(--muted); }
+  li:not(:has(.calls)) label { padding-bottom:14px; }
 </style>
 </head>
 <body>
 <main>
-  <h1>{{ lst.title }}</h1>
-  <div class="meta">{{ lst.sender }}</div>
+  <h1 dir="auto">{{ lst.title }}</h1>
+  <div class="meta" dir="auto">{{ lst.sender }}</div>
   <div class="bar"><i id="bar"></i></div>
   <div class="count" id="count"></div>
   <ul>
     {% for it in items %}
     <li><label>
       <input type="checkbox" data-id="{{ it.id }}" {% if it.done %}checked{% endif %}>
-      <span>{{ it.text }}</span>
-    </label></li>
+      <span dir="auto"><span class="t">{{ it.text }}</span>{% if it.detail %}<span class="d">{{ it.detail }}</span>{% endif %}</span>
+    </label>
+    {% if it.phones %}<div class="calls">{% for ph in it.phones.split(',') %}<a href="tel:{{ ph|replace('-','') }}">📞 {{ ph }}</a>{% endfor %}</div>{% endif %}
+    </li>
     {% endfor %}
   </ul>
 </main>
@@ -43,7 +51,7 @@
   const boxes = [...document.querySelectorAll('input[type=checkbox]')];
   function refresh() {
     const done = boxes.filter(b => b.checked).length;
-    document.getElementById('count').textContent = `${done} of ${boxes.length} done`;
+    document.getElementById('count').textContent = {{ 'rtl'|tojson }} === document.dir ? `${done} מתוך ${boxes.length} בוצעו` : `${done} of ${boxes.length} done`;
     document.getElementById('bar').style.width = (boxes.length ? 100 * done / boxes.length : 0) + '%';
   }
   boxes.forEach(b => b.addEventListener('change', async () => {

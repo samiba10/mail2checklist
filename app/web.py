@@ -1,6 +1,7 @@
 """Checklist web app.  Run:  uvicorn app.web:app --host 0.0.0.0 --port 8000"""
 from __future__ import annotations
 
+import re
 from pathlib import Path
 
 from fastapi import FastAPI, HTTPException, Request
@@ -26,7 +27,8 @@ def checklist(request: Request, token: str):
     lst, items = store.get(token)
     if lst is None:
         raise HTTPException(404, "Checklist not found")
-    return templates.TemplateResponse(request, "list.html", {"lst": lst, "items": items})
+    rtl = bool(re.search(r"[\u0590-\u06FF]", lst["title"]))  # Hebrew / Arabic
+    return templates.TemplateResponse(request, "list.html", {"lst": lst, "items": items, "rtl": rtl})
 
 
 @app.post("/l/{token}/items/{item_id}/toggle")

@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import argparse
 import logging
+import re
 import time
 
 from . import whatsapp
@@ -28,13 +29,14 @@ def process(email: ParsedEmail, msg_id: str, store: Store, s: Settings, dry_run:
     if not items:
         log.warning("no items found in %r — check extractor rules", email.subject)
         return None
-    token = store.create(msg_id, email.subject, email.sender, items)
+    title = re.sub(r"^\s*((fwd?|fw|re|הועבר)\s*:\s*)+", "", email.subject, flags=re.I).strip() or email.subject
+    token = store.create(msg_id, title, email.sender, items)
     link = f"{s.base_url}/l/{token}"
-    log.info("created %d-item list %r -> %s", len(items), email.subject, link)
+    log.info("created %d-item list %r -> %s", len(items), title, link)
     if dry_run or not (s.wa_token and s.wa_phone_id and s.wa_to):
-        print("[WhatsApp preview]", whatsapp.preview(email.subject, len(items), link))
+        print("[WhatsApp preview]", whatsapp.preview(title, len(items), link))
     else:
-        whatsapp.send(s, email.subject, len(items), link)
+        whatsapp.send(s, title, len(items), link)
     return token
 
 

@@ -21,6 +21,8 @@ CREATE TABLE IF NOT EXISTS items (
     list_id INTEGER NOT NULL REFERENCES checklists(id) ON DELETE CASCADE,
     pos INTEGER NOT NULL,
     text TEXT NOT NULL,
+    detail TEXT NOT NULL DEFAULT '',
+    phones TEXT NOT NULL DEFAULT '',
     done INTEGER NOT NULL DEFAULT 0
 );
 """
@@ -44,8 +46,11 @@ class Store:
                 (token, msg_id, title, sender, datetime.now(timezone.utc).isoformat()),
             )
             self.db.executemany(
-                "INSERT INTO items(list_id, pos, text) VALUES (?,?,?)",
-                [(cur.lastrowid, i, it.label()) for i, it in enumerate(items)],
+                "INSERT INTO items(list_id, pos, text, detail, phones) VALUES (?,?,?,?,?)",
+                [
+                    (cur.lastrowid, i, f"{it.qty} × {it.name}" if it.qty else it.name, it.note, ",".join(it.phones))
+                    for i, it in enumerate(items)
+                ],
             )
         return token
 

@@ -1,0 +1,20 @@
+From: Dispatch <dispatch@example.com>
+To: tech@example.com
+Subject: Fwd: רשימת לקוחות והמחממים שנמכרו להם
+Date: Thu, 01 Oct 2026 19:10:07 +0300
+Message-ID: <installs-demo@example.com>
+MIME-Version: 1.0
+Content-Type: text/html; charset="utf-8"
+
+<html><body dir="rtl">
+<p>מצורפת רשימת הלקוחות + המחממים שנמכרו (מסומנים בצהוב)</p>
+<table>
+<tr><td>התקנת מחמם מים ללא הכנה</td><td>01/10/2026</td><td>01/10/2026</td><td>40000001</td><td>ישראל ישראלי</td><td>1234567  הרצל 1 תל אביב</td><td>050-0000001</td><td>050-0000001</td><td style="background:yellow">17טורבו</td></tr>
+<tr><td>התקנת מחמם מים עם הכנה</td><td>02/10/2026</td><td>02/10/2026</td><td>40000002</td><td>דנה כהן</td><td>7654321  הגפן 5 חיפה</td><td>052-0000002</td><td>052-0000003</td><td><span style="background:#FFFF00">20ליטר</span></td></tr>
+</table>
+<table>
+<tr><td></td><td>התקנת מחמם מים עם הכנה</td><td>03/10/2026</td><td>450000003</td><td>יוסי לוי</td><td>0  הזית 3 עכו</td><td>054-0000004</td><td style="background:yellow">17 מאולץ</td><td>טכנאי</td></tr>
+<tr><td></td><td></td><td></td><td></td><td></td></tr>
+</table>
+<table><tr><td>נציגת שירות</td><td>משרד: 050-9999999</td></tr></table>
+</body></html>
